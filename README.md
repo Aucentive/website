@@ -24,3 +24,7 @@ Refer to [https://github.com/Aucentive/contracts] for contract deployment on Goe
 - [XMTP Provider](https://github.com/Aucentive/website/blob/main/src/pages/_app.tsx)
 - [All flavors of XMTP](https://github.com/Aucentive/website/tree/main/src/components/xmtp)
 - [XMTP-powered Chat page](https://github.com/Aucentive/website/blob/main/src/pages/chat.tsx)
+
+### QuickNode
+
+- QuickNode RPCs are used
