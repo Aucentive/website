@@ -16,6 +16,7 @@ import thunk from 'redux-thunk'
 import emailReducer from '@/slices/email'
 import userReducer from '@/slices/user'
 import { emailApi } from '@/services/email'
+import { serviceApi } from '@/services/service'
 import { userApi } from '@/services/user'
 
 // Strongly recommended to blacklist any api(s) that you have configured with RTK Query.
@@ -25,7 +26,7 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  blacklist: [emailApi.reducerPath, userApi.reducerPath],
+  blacklist: [emailApi.reducerPath, serviceApi.reducerPath, userApi.reducerPath],
 }
 
 const reducers = combineReducers({
@@ -34,6 +35,7 @@ const reducers = combineReducers({
   // survey: surveyReducer,
   // API reducers
   [emailApi.reducerPath]: emailApi.reducer,
+  [serviceApi.reducerPath]: serviceApi.reducer,
   [userApi.reducerPath]: userApi.reducer,
 })
 
@@ -52,6 +54,7 @@ const store = configureStore({
         .concat(thunk)
         // redux toolkit query middleware (auto generated)
         .concat(emailApi.middleware)
+        .concat(serviceApi.middleware)
         .concat(userApi.middleware)
     )
   },

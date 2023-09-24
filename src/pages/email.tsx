@@ -169,7 +169,14 @@ export default function EmailPage() {
         console.log('txHash', receipt.transactionHash)
 
         toast.success(
-          `Success! Here is your transaction: ${receipt.transactionHash} `,
+          <div>
+            <a
+              href={`https://goerli.basescan.org/tx/${receipt.transactionHash}`}
+              target="_blank"
+            >
+              Success! Here is your transaction: {receipt.transactionHash}
+            </a>
+          </div>,
           {
             position: 'top-right',
             autoClose: 18000,
