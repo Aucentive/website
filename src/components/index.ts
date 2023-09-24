@@ -1,6 +1,6 @@
 export * from './ColumnRow'
 export * from './GotoLinkButton'
 export * from './LoadingScreen'
-export * from './Navbar'
+export * from './NavTopbar'
 export * from './ShadowedBox'
 export * from './Topbar'

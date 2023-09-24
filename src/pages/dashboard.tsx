@@ -1,3 +1,8 @@
+import {
+  IHybridPaymaster,
+  PaymasterMode,
+  SponsorUserOperationDto,
+} from '@biconomy/paymaster'
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
@@ -5,18 +10,13 @@ import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useState } from 'react'
 import Head from 'next/head'
 
-import { LoadingScreen } from '@/components'
+import { LoadingScreen, NavTopbar } from '@/components'
 import { useBiconomySmartAccount } from '@/components/context/SmartAccountContext'
 import { AUCENTIVE_CONTRACT_ADDRESS_TESTNET } from '@/config'
 import { useCreateUserMutation, useGetUserQuery } from '@/services/user'
 import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
 import { EmailStatus } from '@/types'
 import { AucentiveHub__factory } from '@/types-typechain'
-import {
-  IHybridPaymaster,
-  PaymasterMode,
-  SponsorUserOperationDto,
-} from '@biconomy/paymaster'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -220,6 +220,7 @@ export default function DashboardPage() {
             Logout
           </button>
         </div>
+        <NavTopbar />
         {/* <div className="mt-12 flex gap-4 flex-wrap"> */}
         {/* {googleSubject ? (
             <button
