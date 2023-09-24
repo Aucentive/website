@@ -1,0 +1,368 @@
+import { Box, Button, Stack, TextField, Typography } from '@mui/material'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { usePrivyWagmi } from '@privy-io/wagmi-connector'
+import { useRouter } from 'next/router'
+import React, { useCallback, useEffect, useState } from 'react'
+import Head from 'next/head'
+
+import { LoadingScreen } from '@/components'
+import { useCreateUserMutation, useGetUserQuery } from '@/services/user'
+import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
+import { EmailStatus } from '@/types'
+
+export default function DashboardPage() {
+  const router = useRouter()
+  const {
+    ready,
+    authenticated,
+    user,
+    logout,
+    linkEmail,
+    linkGoogle,
+    // linkWallet,
+    unlinkEmail,
+    unlinkGoogle,
+    // unlinkWallet,
+    // createWallet,
+    getAccessToken,
+  } = usePrivy()
+  const { wallet: activeWallet, setActiveWallet } = usePrivyWagmi()
+  const { wallets } = useWallets()
+
+  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [claimHandleValue, setClaimHandleValue] = useState<string>('')
+
+  const [sendEmailData, setSendEmailData] = useState<{
+    from?: string
+    to?: string
+    subject?: string
+    text?: string
+  }>({})
+
+  const useGetUser = useGetUserQuery(
+    {
+      accessToken: accessToken || '',
+    },
+    {
+      skip: !accessToken,
+    },
+  )
+
+  const [useCreateUser, createUserRes] = useCreateUserMutation()
+  const [useSendEmail, sendEmailRes] = useSendEmailMutation()
+
+  const useGetSentEmails = useGetSentEmailsQuery(
+    {
+      accessToken: accessToken || '',
+    },
+    {
+      skip: !accessToken,
+    },
+  )
+
+  const claimHandleHandler = useCallback(async () => {
+    if (
+      !accessToken ||
+      !claimHandleValue ||
+      !user ||
+      !ready ||
+      (ready && !authenticated)
+    )
+      return
+
+    const userEmail = user.email?.address || user.google?.email
+    const userWallet = user.wallet?.address
+    if (!userEmail || !userWallet) return
+
+    try {
+      console.log('userWallet', userWallet)
+      const res = await useCreateUser({
+        userId: userEmail,
+        address: userWallet,
+        name: user.google?.name || userEmail,
+        handle: `${claimHandleValue}@mail.aucentive.com`,
+        accessToken,
+      }).unwrap()
+      console.log(res)
+    } catch (err) {
+      console.error(err)
+    }
+  }, [accessToken, claimHandleValue, user, ready, authenticated])
+
+  const sendEmailHandler = useCallback(async () => {
+    if (!accessToken || !user || !ready || (ready && !authenticated)) return
+
+    const userEmail = user.email?.address || user.google?.email
+    if (!userEmail) return
+
+    if (!sendEmailData.to || !sendEmailData.subject || !sendEmailData.text)
+      return
+
+    try {
+      let recipientEmail = sendEmailData.to.replace('@mail.aucentive.com', '')
+      recipientEmail = `${recipientEmail}@mail.aucentive.com`
+
+      const res = await useSendEmail({
+        accessToken,
+        from: userEmail,
+        to: recipientEmail,
+        subject: sendEmailData.subject,
+        text: sendEmailData.text,
+        html: sendEmailData.text,
+      }).unwrap()
+      console.log(res)
+    } catch (err) {
+      console.error(err)
+    }
+  }, [accessToken, user, ready, authenticated, sendEmailData])
+
+  useEffect(() => {
+    if (ready && !authenticated) {
+      router.push('/auth')
+      return
+    }
+
+    // things after this line will only run if ready and authenticated
+    if (!ready) return
+
+    getAccessToken().then((token) => setAccessToken(token))
+  }, [ready, authenticated, router])
+
+  const numAccounts = user?.linkedAccounts?.length || 0
+  const canRemoveAccount = numAccounts > 1
+
+  const email = user?.email
+  const wallet = user?.wallet
+
+  const googleSubject = user?.google?.subject || null
+
+  const userEmail = user?.email?.address || user?.google?.email || null
+
+  if (!ready || (ready && !authenticated)) {
+    return <LoadingScreen />
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Dashboard · Aucentive</title>
+      </Head>
+
+      <main className="flex flex-col min-h-screen px-4 sm:px-20 py-6 sm:py-10 bg-privy-light-blue">
+        <div className="flex flex-row justify-between">
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <button
+            onClick={logout}
+            className="text-sm bg-violet-200 hover:text-violet-900 py-2 px-4 rounded-md text-violet-700"
+          >
+            Logout
+          </button>
+        </div>
+        {/* <div className="mt-12 flex gap-4 flex-wrap"> */}
+        {/* {googleSubject ? (
+            <button
+              onClick={() => {
+                unlinkGoogle(googleSubject)
+              }}
+              className="text-sm border border-violet-600 hover:border-violet-700 py-2 px-4 rounded-md text-violet-600 hover:text-violet-700 disabled:border-gray-500 disabled:text-gray-500 hover:disabled:text-gray-500"
+              disabled={!canRemoveAccount}
+            >
+              Unlink Google
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                linkGoogle()
+              }}
+              className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white"
+            >
+              Link Google
+            </button>
+          )}
+
+          {email ? (
+            <button
+              onClick={() => {
+                unlinkEmail(email.address)
+              }}
+              className="text-sm border border-violet-600 hover:border-violet-700 py-2 px-4 rounded-md text-violet-600 hover:text-violet-700 disabled:border-gray-500 disabled:text-gray-500 hover:disabled:text-gray-500"
+              disabled={!canRemoveAccount}
+            >
+              Unlink email
+            </button>
+          ) : (
+            <button
+              onClick={linkEmail}
+              className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white"
+            >
+              Connect email
+            </button>
+          )} */}
+        {/* {wallet ? (
+            <button
+              onClick={() => {
+                unlinkWallet(wallet.address)
+              }}
+              className="text-sm border border-violet-600 hover:border-violet-700 py-2 px-4 rounded-md text-violet-600 hover:text-violet-700 disabled:border-gray-500 disabled:text-gray-500 hover:disabled:text-gray-500"
+              disabled={!canRemoveAccount}
+            >
+              Unlink wallet
+            </button>
+          ) : (
+            <button
+              onClick={linkWallet}
+              className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white border-none"
+            >
+              Connect wallet
+            </button>
+          )} */}
+        {/* </div> */}
+
+        {useGetUser.isLoading || useGetUser.isFetching ? (
+          <></>
+        ) : !useGetUser.isFetching &&
+          useGetUser.data &&
+          !!useGetUser.data.payload &&
+          !!useGetUser.data.payload.address ? (
+          <>
+            <Typography
+              variant="body1"
+              mt={6}
+              fontWeight="bold"
+              textTransform="uppercase"
+              className="text-gray-600"
+            >
+              Emails
+            </Typography>
+            <Box>
+              <Typography variant="h5">Sent Emails</Typography>
+              <Box mt={2}>
+                <Typography variant="body1">
+                  {useGetSentEmails.data?.payload?.map((email) => (
+                    <Box key={email.id}>
+                      <Typography variant="body1">ID: {email.id}</Typography>
+                      <Typography variant="body1">
+                        Status: {EmailStatus[email.status]}
+                      </Typography>
+                      <Typography variant="body1">
+                        Recipient: {email.recipient}
+                      </Typography>
+                      <Typography variant="body1">
+                        Subject: {email.subject}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Typography>
+              </Box>
+            </Box>
+            {userEmail && (
+              <Box mt={4}>
+                <Typography variant="h5">Send Email</Typography>
+                <Box
+                  mt={2}
+                  maxWidth={550}
+                  p={3}
+                  bgcolor="#eee"
+                  borderRadius={2}
+                >
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Typography variant="body1" fontWeight="bold">
+                      From:{' '}
+                    </Typography>
+                    <Typography>{userEmail}</Typography>
+                  </Stack>
+                  <Stack direction="column" spacing={1} mt={2}>
+                    <Typography variant="body1" fontWeight="bold">
+                      To:{' '}
+                    </Typography>
+                    <TextField
+                      type="text"
+                      size="small"
+                      variant="outlined"
+                      placeholder="jdub@jdub.com"
+                      value={sendEmailData.to}
+                      onChange={(e) =>
+                        setSendEmailData((prev) => ({
+                          ...prev,
+                          to: e.target.value,
+                        }))
+                      }
+                    />
+                  </Stack>
+                  <Stack direction="column" spacing={1} mt={2}>
+                    <Typography variant="body1" fontWeight="bold">
+                      Subject
+                    </Typography>
+                    <TextField
+                      type="text"
+                      size="small"
+                      variant="outlined"
+                      placeholder="Type subject here"
+                      value={sendEmailData.subject}
+                      onChange={(e) =>
+                        setSendEmailData((prev) => ({
+                          ...prev,
+                          subject: e.target.value,
+                        }))
+                      }
+                    />
+                  </Stack>
+                  <Stack direction="column" spacing={1} mt={3}>
+                    <Typography variant="body1" fontWeight="bold">
+                      Text
+                    </Typography>
+                    <TextField
+                      type="text"
+                      size="medium"
+                      variant="outlined"
+                      placeholder="text"
+                      multiline
+                      minRows={5}
+                      value={sendEmailData.text}
+                      onChange={(e) =>
+                        setSendEmailData((prev) => ({
+                          ...prev,
+                          text: e.target.value,
+                        }))
+                      }
+                    />
+                  </Stack>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={sendEmailHandler}
+                    sx={{ mt: 2 }}
+                  >
+                    Send Email
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </>
+        ) : (
+          <Box mt={2}>
+            <Typography variant="h5">Claim Handle</Typography>
+            <Stack direction="row" spacing={2} alignItems="center" mt={4}>
+              <TextField
+                type="text"
+                size="medium"
+                variant="outlined"
+                placeholder="Enter handle to claim"
+                value={claimHandleValue}
+                onChange={(e) => setClaimHandleValue(e.target.value)}
+              />
+              <Typography variant="body1">@mail.aucentive.com</Typography>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={claimHandleHandler}
+              >
+                Claim
+              </Button>
+            </Stack>
+          </Box>
+        )}
+      </main>
+    </>
+  )
+}
