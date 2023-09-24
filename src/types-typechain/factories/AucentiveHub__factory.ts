@@ -85,7 +85,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "USDC",
+    name: "PAYMENT_TOKEN",
     outputs: [
       {
         internalType: "contract IERC20",
@@ -143,6 +143,19 @@ const _abi = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "newToken",
+        type: "address",
+      },
+    ],
+    name: "changePaymentToken",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {

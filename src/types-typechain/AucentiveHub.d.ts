@@ -21,8 +21,9 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface AucentiveHubInterface extends ethers.utils.Interface {
   functions: {
-    "USDC()": FunctionFragment;
+    "PAYMENT_TOKEN()": FunctionFragment;
     "_services(bytes32)": FunctionFragment;
+    "changePaymentToken(address)": FunctionFragment;
     "createService(bytes32,uint256,uint64)": FunctionFragment;
     "execute(bytes32,string,string,bytes)": FunctionFragment;
     "executeWithToken(bytes32,string,string,bytes,string,uint256)": FunctionFragment;
@@ -36,10 +37,17 @@ interface AucentiveHubInterface extends ethers.utils.Interface {
     "withdrawBalance()": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "USDC", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "PAYMENT_TOKEN",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "_services",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "changePaymentToken",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "createService",
@@ -77,8 +85,15 @@ interface AucentiveHubInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
 
-  decodeFunctionResult(functionFragment: "USDC", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "PAYMENT_TOKEN",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_services", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "changePaymentToken",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "createService",
     data: BytesLike
@@ -176,7 +191,7 @@ export class AucentiveHub extends BaseContract {
   interface: AucentiveHubInterface;
 
   functions: {
-    USDC(overrides?: CallOverrides): Promise<[string]>;
+    PAYMENT_TOKEN(overrides?: CallOverrides): Promise<[string]>;
 
     _services(
       arg0: BytesLike,
@@ -200,6 +215,11 @@ export class AucentiveHub extends BaseContract {
         status: number;
       }
     >;
+
+    changePaymentToken(
+      newToken: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     createService(
       serviceId: BytesLike,
@@ -281,7 +301,7 @@ export class AucentiveHub extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  USDC(overrides?: CallOverrides): Promise<string>;
+  PAYMENT_TOKEN(overrides?: CallOverrides): Promise<string>;
 
   _services(
     arg0: BytesLike,
@@ -305,6 +325,11 @@ export class AucentiveHub extends BaseContract {
       status: number;
     }
   >;
+
+  changePaymentToken(
+    newToken: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   createService(
     serviceId: BytesLike,
@@ -384,7 +409,7 @@ export class AucentiveHub extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    USDC(overrides?: CallOverrides): Promise<string>;
+    PAYMENT_TOKEN(overrides?: CallOverrides): Promise<string>;
 
     _services(
       arg0: BytesLike,
@@ -408,6 +433,11 @@ export class AucentiveHub extends BaseContract {
         status: number;
       }
     >;
+
+    changePaymentToken(
+      newToken: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     createService(
       serviceId: BytesLike,
@@ -520,9 +550,14 @@ export class AucentiveHub extends BaseContract {
   };
 
   estimateGas: {
-    USDC(overrides?: CallOverrides): Promise<BigNumber>;
+    PAYMENT_TOKEN(overrides?: CallOverrides): Promise<BigNumber>;
 
     _services(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
+
+    changePaymentToken(
+      newToken: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     createService(
       serviceId: BytesLike,
@@ -585,11 +620,16 @@ export class AucentiveHub extends BaseContract {
   };
 
   populateTransaction: {
-    USDC(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    PAYMENT_TOKEN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _services(
       arg0: BytesLike,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    changePaymentToken(
+      newToken: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     createService(

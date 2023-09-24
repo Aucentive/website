@@ -16,7 +16,6 @@ import { useBiconomySmartAccount } from '@/components/context/SmartAccountContex
 import { AUCENTIVE_CONTRACT_ADDRESS_TESTNET } from '@/config'
 import { useCreateUserMutation, useGetUserQuery } from '@/services/user'
 import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
-import { EmailStatus } from '@/types'
 import { AucentiveHub__factory } from '@/types-typechain'
 
 export default function DashboardPage() {

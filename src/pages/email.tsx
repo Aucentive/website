@@ -20,7 +20,7 @@ import {
   useGetSentEmailsQuery,
   useSendEmailMutation,
 } from '@/services/email'
-import { EmailStatus } from '@/types'
+import { EmailStatus, ServiceStatus } from '@/types'
 import { AucentiveHub__factory } from '@/types-typechain'
 
 export default function EmailPage() {
@@ -354,7 +354,9 @@ export default function EmailPage() {
                           <Typography variant="body1">
                             Subject: {email.subject}
                           </Typography>
-                          <TextField
+                          {email.status !== 4 && email.status !== 5 && (
+                            <>
+                              <TextField
                             type="number"
                             value={payServiceAmount[email.id] || 0}
                             onChange={(e) =>
@@ -388,6 +390,8 @@ export default function EmailPage() {
                           >
                             Check Email
                           </Button>
+                            </>
+                          )}
                         </Stack>
                       </Box>
                     )
