@@ -83,9 +83,6 @@ dependencies:
   graphql:
     specifier: ^16.7.1
     version: 16.8.1
-  net:
-    specifier: ^1.0.2
-    version: 1.0.2
   next:
     specifier: 13.4.12
     version: 13.4.12(@babel/core@7.22.20)(react-dom@18.2.0)(react@18.2.0)
@@ -119,9 +116,6 @@ dependencies:
   tailwindcss:
     specifier: 3.3.3
     version: 3.3.3
-  tls:
-    specifier: ^0.0.1
-    version: 0.0.1
   wagmi:
     specifier: ^1.4.2
     version: 1.4.2(@types/react@18.2.22)(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)(viem@1.12.1)
@@ -8647,10 +8641,6 @@ packages:
     engines: {node: '>= 0.6'}
     dev: false
 
-  /net@1.0.2:
-    resolution: {integrity: sha512-kbhcj2SVVR4caaVnGLJKmlk2+f+oLkjqdKeQlmUtz6nGzOpbcobwVIeSURNgraV/v3tlmGIX82OcPCl0K6RbHQ==}
-    dev: false
-
   /next-redux-wrapper@8.1.0(next@13.4.12)(react-redux@8.1.2)(react@18.2.0):
     resolution: {integrity: sha512-2hIau0hcI6uQszOtrvAFqgc0NkZegKYhBB7ZAKiG3jk7zfuQb4E7OV9jfxViqqojh3SEHdnFfPkN9KErttUKuw==}
     peerDependencies:
@@ -10704,10 +10694,6 @@ packages:
 
   /tinycolor2@1.6.0:
     resolution: {integrity: sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==}
-    dev: false
-
-  /tls@0.0.1:
-    resolution: {integrity: sha512-GzHpG+hwupY8VMR6rYsnAhTHqT/97zT45PG8WD5eTT1lq+dFE0nN+1PYpsoBcHJgSmTz5ceK2Cv88IkPmIPOtQ==}
     dev: false
 
   /tmp@0.0.33:

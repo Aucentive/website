@@ -22,25 +22,25 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface AucentiveHubInterface extends ethers.utils.Interface {
   functions: {
     "USDC()": FunctionFragment;
+    "_services(bytes32)": FunctionFragment;
     "createService(bytes32,uint256,uint64)": FunctionFragment;
     "execute(bytes32,string,string,bytes)": FunctionFragment;
     "executeWithToken(bytes32,string,string,bytes,string,uint256)": FunctionFragment;
     "gasService()": FunctionFragment;
     "gateway()": FunctionFragment;
-    "getSettledData(bytes32,string)": FunctionFragment;
-    "modifyOpimisticOracle(address)": FunctionFragment;
     "modifyServiceStatus(bytes32,uint8,address,address)": FunctionFragment;
-    "oo()": FunctionFragment;
     "owner()": FunctionFragment;
     "payForService(bytes32,uint256)": FunctionFragment;
-    "requestData(bytes32,string)": FunctionFragment;
-    "requestTimes(bytes32)": FunctionFragment;
-    "settleRequest(bytes32,string)": FunctionFragment;
+    "services(bytes32)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "withdrawBalanceViaAdmin(address)": FunctionFragment;
+    "withdrawBalance()": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "USDC", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "_services",
+    values: [BytesLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "createService",
     values: [BytesLike, BigNumberish, BigNumberish]
@@ -59,45 +59,26 @@ interface AucentiveHubInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "gateway", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getSettledData",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "modifyOpimisticOracle",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "modifyServiceStatus",
     values: [BytesLike, BigNumberish, string, string]
   ): string;
-  encodeFunctionData(functionFragment: "oo", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "payForService",
     values: [BytesLike, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "requestData",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "requestTimes",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "settleRequest",
-    values: [BytesLike, string]
-  ): string;
+  encodeFunctionData(functionFragment: "services", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdrawBalanceViaAdmin",
-    values: [string]
+    functionFragment: "withdrawBalance",
+    values?: undefined
   ): string;
 
   decodeFunctionResult(functionFragment: "USDC", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "_services", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "createService",
     data: BytesLike
@@ -110,41 +91,21 @@ interface AucentiveHubInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "gasService", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "gateway", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getSettledData",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "modifyOpimisticOracle",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "modifyServiceStatus",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "oo", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "payForService",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "requestData",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "requestTimes",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "settleRequest",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "services", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "withdrawBalanceViaAdmin",
+    functionFragment: "withdrawBalance",
     data: BytesLike
   ): Result;
 
@@ -217,6 +178,29 @@ export class AucentiveHub extends BaseContract {
   functions: {
     USDC(overrides?: CallOverrides): Promise<[string]>;
 
+    _services(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        number
+      ] & {
+        minAmount: BigNumber;
+        paidAmount: BigNumber;
+        createdAt: BigNumber;
+        paidAt: BigNumber;
+        completedAt: BigNumber;
+        duration: BigNumber;
+        status: number;
+      }
+    >;
+
     createService(
       serviceId: BytesLike,
       minAmount: BigNumberish,
@@ -246,17 +230,6 @@ export class AucentiveHub extends BaseContract {
 
     gateway(overrides?: CallOverrides): Promise<[string]>;
 
-    getSettledData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    modifyOpimisticOracle(
-      _oo: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     modifyServiceStatus(
       serviceId: BytesLike,
       status: BigNumberish,
@@ -264,8 +237,6 @@ export class AucentiveHub extends BaseContract {
       serviceRecipient: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    oo(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -275,35 +246,65 @@ export class AucentiveHub extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    requestData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    requestTimes(
-      arg0: BytesLike,
+    services(
+      serviceId: BytesLike,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    settleRequest(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    ): Promise<
+      [
+        [
+          BigNumber,
+          BigNumber,
+          BigNumber,
+          BigNumber,
+          BigNumber,
+          BigNumber,
+          number
+        ] & {
+          minAmount: BigNumber;
+          paidAmount: BigNumber;
+          createdAt: BigNumber;
+          paidAt: BigNumber;
+          completedAt: BigNumber;
+          duration: BigNumber;
+          status: number;
+        }
+      ]
+    >;
 
     transferOwnership(
       newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    withdrawBalanceViaAdmin(
-      recipient: string,
+    withdrawBalance(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
   USDC(overrides?: CallOverrides): Promise<string>;
+
+  _services(
+    arg0: BytesLike,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      number
+    ] & {
+      minAmount: BigNumber;
+      paidAmount: BigNumber;
+      createdAt: BigNumber;
+      paidAt: BigNumber;
+      completedAt: BigNumber;
+      duration: BigNumber;
+      status: number;
+    }
+  >;
 
   createService(
     serviceId: BytesLike,
@@ -334,17 +335,6 @@ export class AucentiveHub extends BaseContract {
 
   gateway(overrides?: CallOverrides): Promise<string>;
 
-  getSettledData(
-    identifier: BytesLike,
-    ancillaryString: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  modifyOpimisticOracle(
-    _oo: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   modifyServiceStatus(
     serviceId: BytesLike,
     status: BigNumberish,
@@ -352,8 +342,6 @@ export class AucentiveHub extends BaseContract {
     serviceRecipient: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  oo(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -363,32 +351,63 @@ export class AucentiveHub extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  requestData(
-    identifier: BytesLike,
-    ancillaryString: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  requestTimes(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
-
-  settleRequest(
-    identifier: BytesLike,
-    ancillaryString: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  services(
+    serviceId: BytesLike,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      number
+    ] & {
+      minAmount: BigNumber;
+      paidAmount: BigNumber;
+      createdAt: BigNumber;
+      paidAt: BigNumber;
+      completedAt: BigNumber;
+      duration: BigNumber;
+      status: number;
+    }
+  >;
 
   transferOwnership(
     newOwner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  withdrawBalanceViaAdmin(
-    recipient: string,
+  withdrawBalance(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
     USDC(overrides?: CallOverrides): Promise<string>;
+
+    _services(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        number
+      ] & {
+        minAmount: BigNumber;
+        paidAmount: BigNumber;
+        createdAt: BigNumber;
+        paidAt: BigNumber;
+        completedAt: BigNumber;
+        duration: BigNumber;
+        status: number;
+      }
+    >;
 
     createService(
       serviceId: BytesLike,
@@ -419,17 +438,6 @@ export class AucentiveHub extends BaseContract {
 
     gateway(overrides?: CallOverrides): Promise<string>;
 
-    getSettledData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    modifyOpimisticOracle(
-      _oo: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     modifyServiceStatus(
       serviceId: BytesLike,
       status: BigNumberish,
@@ -437,8 +445,6 @@ export class AucentiveHub extends BaseContract {
       serviceRecipient: string,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    oo(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -448,32 +454,35 @@ export class AucentiveHub extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    requestData(
-      identifier: BytesLike,
-      ancillaryString: string,
+    services(
+      serviceId: BytesLike,
       overrides?: CallOverrides
-    ): Promise<void>;
-
-    requestTimes(
-      arg0: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    settleRequest(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        number
+      ] & {
+        minAmount: BigNumber;
+        paidAmount: BigNumber;
+        createdAt: BigNumber;
+        paidAt: BigNumber;
+        completedAt: BigNumber;
+        duration: BigNumber;
+        status: number;
+      }
+    >;
 
     transferOwnership(
       newOwner: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdrawBalanceViaAdmin(
-      recipient: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    withdrawBalance(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
@@ -513,6 +522,8 @@ export class AucentiveHub extends BaseContract {
   estimateGas: {
     USDC(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _services(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
+
     createService(
       serviceId: BytesLike,
       minAmount: BigNumberish,
@@ -542,17 +553,6 @@ export class AucentiveHub extends BaseContract {
 
     gateway(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getSettledData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    modifyOpimisticOracle(
-      _oo: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     modifyServiceStatus(
       serviceId: BytesLike,
       status: BigNumberish,
@@ -560,8 +560,6 @@ export class AucentiveHub extends BaseContract {
       serviceRecipient: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    oo(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -571,21 +569,9 @@ export class AucentiveHub extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    requestData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    requestTimes(
-      arg0: BytesLike,
+    services(
+      serviceId: BytesLike,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    settleRequest(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     transferOwnership(
@@ -593,14 +579,18 @@ export class AucentiveHub extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    withdrawBalanceViaAdmin(
-      recipient: string,
+    withdrawBalance(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     USDC(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _services(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     createService(
       serviceId: BytesLike,
@@ -631,17 +621,6 @@ export class AucentiveHub extends BaseContract {
 
     gateway(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getSettledData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    modifyOpimisticOracle(
-      _oo: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     modifyServiceStatus(
       serviceId: BytesLike,
       status: BigNumberish,
@@ -649,8 +628,6 @@ export class AucentiveHub extends BaseContract {
       serviceRecipient: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    oo(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -660,21 +637,9 @@ export class AucentiveHub extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    requestData(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    requestTimes(
-      arg0: BytesLike,
+    services(
+      serviceId: BytesLike,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    settleRequest(
-      identifier: BytesLike,
-      ancillaryString: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     transferOwnership(
@@ -682,8 +647,7 @@ export class AucentiveHub extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    withdrawBalanceViaAdmin(
-      recipient: string,
+    withdrawBalance(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

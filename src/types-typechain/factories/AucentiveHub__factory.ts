@@ -24,11 +24,6 @@ const _abi = [
         name: "_usdc",
         type: "address",
       },
-      {
-        internalType: "address",
-        name: "_umaOo",
-        type: "address",
-      },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
@@ -96,6 +91,55 @@ const _abi = [
         internalType: "contract IERC20",
         name: "",
         type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+    ],
+    name: "_services",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "minAmount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "paidAmount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint64",
+        name: "createdAt",
+        type: "uint64",
+      },
+      {
+        internalType: "uint64",
+        name: "paidAt",
+        type: "uint64",
+      },
+      {
+        internalType: "uint64",
+        name: "completedAt",
+        type: "uint64",
+      },
+      {
+        internalType: "uint64",
+        name: "duration",
+        type: "uint64",
+      },
+      {
+        internalType: "enum AucentiveHub.ServiceStatus",
+        name: "status",
+        type: "uint8",
       },
     ],
     stateMutability: "view",
@@ -220,43 +264,6 @@ const _abi = [
     inputs: [
       {
         internalType: "bytes32",
-        name: "identifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "string",
-        name: "ancillaryString",
-        type: "string",
-      },
-    ],
-    name: "getSettledData",
-    outputs: [
-      {
-        internalType: "int256",
-        name: "",
-        type: "int256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_oo",
-        type: "address",
-      },
-    ],
-    name: "modifyOpimisticOracle",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
         name: "serviceId",
         type: "bytes32",
       },
@@ -279,19 +286,6 @@ const _abi = [
     name: "modifyServiceStatus",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "oo",
-    outputs: [
-      {
-        internalType: "contract OptimisticOracleV2Interface",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -329,55 +323,56 @@ const _abi = [
     inputs: [
       {
         internalType: "bytes32",
-        name: "identifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "string",
-        name: "ancillaryString",
-        type: "string",
-      },
-    ],
-    name: "requestData",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "",
+        name: "serviceId",
         type: "bytes32",
       },
     ],
-    name: "requestTimes",
+    name: "services",
     outputs: [
       {
-        internalType: "uint256",
+        components: [
+          {
+            internalType: "uint256",
+            name: "minAmount",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "paidAmount",
+            type: "uint256",
+          },
+          {
+            internalType: "uint64",
+            name: "createdAt",
+            type: "uint64",
+          },
+          {
+            internalType: "uint64",
+            name: "paidAt",
+            type: "uint64",
+          },
+          {
+            internalType: "uint64",
+            name: "completedAt",
+            type: "uint64",
+          },
+          {
+            internalType: "uint64",
+            name: "duration",
+            type: "uint64",
+          },
+          {
+            internalType: "enum AucentiveHub.ServiceStatus",
+            name: "status",
+            type: "uint8",
+          },
+        ],
+        internalType: "struct AucentiveHub.Service",
         name: "",
-        type: "uint256",
+        type: "tuple",
       },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "identifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "string",
-        name: "ancillaryString",
-        type: "string",
-      },
-    ],
-    name: "settleRequest",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -394,14 +389,8 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "recipient",
-        type: "address",
-      },
-    ],
-    name: "withdrawBalanceViaAdmin",
+    inputs: [],
+    name: "withdrawBalance",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

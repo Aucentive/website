@@ -30,13 +30,13 @@ type ISmartAccount = {
 }
 
 type SmartAccountContextType = {
-  wallet: BiconomySmartAccountV2 | null
-  state: any | null // SmartAccountState
+  smartAccount: BiconomySmartAccountV2 | null
+  // state: any | null // SmartAccountState
   balance: Balance
   loading: boolean
   isFetchingBalance: boolean
   selectedAccount: ISmartAccount | null
-  smartAccountsArray: ISmartAccount[]
+  // smartAccountsArray: ISmartAccount[]
   setSelectedAccount: React.Dispatch<React.SetStateAction<ISmartAccount | null>>
   getSmartAccount: () => Promise<string>
   getSmartAccountBalance: () => Promise<string>
@@ -52,8 +52,8 @@ export const biconomySupportedChainIds = [
 // Context
 export const SmartAccountContext = React.createContext<SmartAccountContextType>(
   {
-    wallet: null,
-    state: null,
+    smartAccount: null,
+    // state: null,
     balance: {
       totalBalanceInUsd: 0,
       alltokenBalances: [],
@@ -61,13 +61,14 @@ export const SmartAccountContext = React.createContext<SmartAccountContextType>(
     loading: false,
     isFetchingBalance: false,
     selectedAccount: null,
-    smartAccountsArray: [],
+    // smartAccountsArray: [],
     setSelectedAccount: () => {},
     getSmartAccount: () => Promise.resolve(''),
     getSmartAccountBalance: () => Promise.resolve(''),
   },
 )
-export const useSmartAccountContext = () => useContext(SmartAccountContext)
+
+export const useBiconomySmartAccount = () => useContext(SmartAccountContext)
 
 const targetChainId =
   process.env.NEXT_PUBLIC_CHAIN_TARGET === 'mainnet'
@@ -99,12 +100,28 @@ export const BiconomySmartAccountProvider = ({ children }: any) => {
   const [loading, setLoading] = useState(false)
 
   const getSmartAccount = useCallback(async () => {
-    console.log('getSmartAccount')
-    if (!ready || (ready && !authenticated)) return 'Not authenticated'
-    if (!user || !user.wallet || !activeWallet || !wallets || !wallets.length)
-      return 'No wallet found'
-    if (activeWallet.address !== user.wallet.address)
-      return 'Privy embedded wallet not active'
+    // console.log('getSmartAccount')
+    if (!ready || (ready && !authenticated)) {
+      console.log('Not authenticated')
+      return
+    }
+    if (!user || !user.wallet || !activeWallet || !wallets || !wallets.length) {
+      console.log('No wallet found')
+      return
+    }
+    if (activeWallet.address !== user.wallet.address) {
+      console.log('Privy embedded wallet not active')
+      // console.log('Active wallet: ', activeWallet.address)
+      // console.log('User wallet: ', user.wallet.address)
+
+      for (const wallet of wallets) {
+        if (wallet.address === user.wallet.address) {
+          setActiveWallet(wallet)
+          break
+        }
+      }
+      return
+    }
 
     const activeChainId = parseInt(activeWallet.chainId)
     // @ts-ignore
@@ -112,29 +129,24 @@ export const BiconomySmartAccountProvider = ({ children }: any) => {
       // return 'Unsupported chain'
       await activeWallet.switchChain(targetChainId)
     }
+    console.log('>> activeWallet', activeWallet.address)
+    console.log('>> activeChainId', activeChainId)
 
     try {
       setLoading(true)
 
-      const walletProvider = await activeWallet.getEthersProvider()
-      const provider = await activeWallet.getEthersProvider()
       await activeWallet.switchChain(targetChainId)
+
+      // const walletProvider = await activeWallet.getEthersProvider()
+      const provider = await activeWallet.getEthersProvider()
       const walletSigner = provider.getSigner()
       // console.log('walletProvider', walletProvider)
 
-      await activeWallet.switchChain(targetChainId)
-
-      // const smartAccountWallet = new BiconomySmartAccountV2(walletProvider, {
-      //   activeNetworkId: activeChainId,
-      //   supportedNetworksIds: biconomySupportedChainIds,
-      //   networkConfig: [
-      //     {
-      //       chainId: 80001,
-      //       dappAPIKey: '59fRCMXvk.8a1652f0-b522-4ea7-b296-98628499aee3',
-      //     },
-      //   ],
-      // })
-      // console.log('wallet', wallet)
+      console.log(
+        'bundler url',
+        `https://bundler.biconomy.io/api/v2/${targetChainId}/${process.env.NEXT_PUBLIC_BICONOMY_BUNDLER_API_KEY}`,
+      )
+      console.log('targetChainId', targetChainId)
 
       const bundler: IBundler = new Bundler({
         //https://dashboard.biconomy.io/ get bundler urls from your dashboard
@@ -143,13 +155,14 @@ export const BiconomySmartAccountProvider = ({ children }: any) => {
         entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
       })
 
+      const paymasterUrl =
+        targetChainId === ChainId.BASE_MAINNET
+          ? (process.env.NEXT_PUBLIC_BICONOMY_PAYMASTER_URL_MAINNET as string)
+          : (process.env.NEXT_PUBLIC_BICONOMY_PAYMASTER_URL_TESTNET as string)
+      console.log('paymasterUrl', paymasterUrl)
+
       const paymaster: IPaymaster = new BiconomyPaymaster({
-        //https://dashboard.biconomy.io/ get paymaster urls from your dashboard
-        paymasterUrl:
-          targetChainId === ChainId.BASE_MAINNET
-            ? (process.env.NEXT_PUBLIC_BICONOMY_PAYMASTER_URL_MAINNET as string)
-            : (process.env
-                .NEXT_PUBLIC_BICONOMY_PAYMASTER_URL_TESTNET as string),
+        paymasterUrl,
       })
 
       // instance of ownership module - this can alternatively be the multi chain module
@@ -159,7 +172,7 @@ export const BiconomySmartAccountProvider = ({ children }: any) => {
       })
 
       const biconomySmartAccount = await BiconomySmartAccountV2.create({
-        chainId: ChainId.POLYGON_MUMBAI, //or any chain of your choice
+        chainId: targetChainId, //or any chain of your choice
         bundler: bundler, // instance of bundler
         paymaster: paymaster, // instance of paymaster
         entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS, //entry point address for chain
@@ -167,21 +180,21 @@ export const BiconomySmartAccountProvider = ({ children }: any) => {
         activeValidationModule: ownerShipModule, // either ECDSA or Multi chain to start
       })
 
-      const biconomyAccountAddress =
-        await biconomySmartAccount.getAccountAddress()
+      // const biconomyAccountAddress =
+      //   await biconomySmartAccount.getAccountAddress()
 
-      const { data: smartAccounts } =
-        await biconomySmartAccount.getSmartAccountsByOwner({
-          index: 0,
-          chainId: targetChainId,
-          owner: activeWallet.address,
-        })
+      // const { data: smartAccounts } =
+      //   await biconomySmartAccount.getSmartAccountsByOwner({
+      //     index: 0,
+      //     chainId: targetChainId,
+      //     owner: activeWallet.address,
+      //   })
       // console.log(smartAccounts)
 
       // Wallet initialization to fetch wallet info
       const smartAccount = await biconomySmartAccount.init()
       setSmartAccountWallet(smartAccount)
-      console.info('smartAccount', smartAccount)
+      console.info('context smartAccount', smartAccount)
 
       // smartAccount.on('txHashGenerated', (response: any) => {
       //   console.log(
@@ -309,13 +322,13 @@ export const BiconomySmartAccountProvider = ({ children }: any) => {
   return (
     <SmartAccountContext.Provider
       value={{
-        wallet: smartAccountWallet,
-        state,
+        smartAccount: smartAccountWallet,
+        // state,
         balance,
         loading,
         isFetchingBalance,
         selectedAccount,
-        smartAccountsArray,
+        // smartAccountsArray,
         setSelectedAccount,
         getSmartAccount,
         getSmartAccountBalance,

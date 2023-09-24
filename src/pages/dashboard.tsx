@@ -6,9 +6,17 @@ import React, { useCallback, useEffect, useState } from 'react'
 import Head from 'next/head'
 
 import { LoadingScreen } from '@/components'
+import { useBiconomySmartAccount } from '@/components/context/SmartAccountContext'
+import { AUCENTIVE_CONTRACT_ADDRESS_TESTNET } from '@/config'
 import { useCreateUserMutation, useGetUserQuery } from '@/services/user'
 import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
 import { EmailStatus } from '@/types'
+import { AucentiveHub__factory } from '@/types-typechain'
+import {
+  IHybridPaymaster,
+  PaymasterMode,
+  SponsorUserOperationDto,
+} from '@biconomy/paymaster'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -28,6 +36,8 @@ export default function DashboardPage() {
   } = usePrivy()
   const { wallet: activeWallet, setActiveWallet } = usePrivyWagmi()
   const { wallets } = useWallets()
+
+  const { smartAccount } = useBiconomySmartAccount()
 
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [claimHandleValue, setClaimHandleValue] = useState<string>('')
@@ -115,6 +125,58 @@ export default function DashboardPage() {
       console.error(err)
     }
   }, [accessToken, user, ready, authenticated, sendEmailData])
+
+  const withdrawBalanceHandle = useCallback(async () => {
+    console.log('smartAccount', smartAccount)
+    if (!activeWallet || !smartAccount) return
+
+    const provider = await activeWallet.getEthersProvider()
+    const contract = AucentiveHub__factory.connect(
+      AUCENTIVE_CONTRACT_ADDRESS_TESTNET,
+      provider,
+    )
+
+    try {
+      const withdrawTx = await contract.populateTransaction.withdrawBalance()
+      console.log(withdrawTx.data)
+
+      const tx1 = {
+        to: AUCENTIVE_CONTRACT_ADDRESS_TESTNET,
+        data: withdrawTx.data,
+      }
+
+      let userOp = await smartAccount.buildUserOp([tx1])
+      console.log('userOp', userOp)
+
+      const biconomyPaymaster =
+        smartAccount.paymaster as IHybridPaymaster<SponsorUserOperationDto>
+
+      let paymasterServiceData: SponsorUserOperationDto = {
+        mode: PaymasterMode.SPONSORED,
+        smartAccountInfo: {
+          name: 'BICONOMY',
+          version: '2.0.0',
+        },
+      }
+
+      const paymasterAndDataResponse =
+        await biconomyPaymaster.getPaymasterAndData(
+          userOp,
+          paymasterServiceData,
+        )
+      console.log('paymasterAndDataResponse', paymasterAndDataResponse)
+
+      userOp.paymasterAndData = paymasterAndDataResponse.paymasterAndData
+      const userOpResponse = await smartAccount.sendUserOp(userOp)
+      console.log('userOpHash', userOpResponse)
+
+      const { receipt } = await userOpResponse.wait(1)
+      console.log('txHash', receipt.transactionHash)
+    } catch (err: any) {
+      console.error(err)
+      console.log(err)
+    }
+  }, [activeWallet, smartAccount])
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -225,6 +287,12 @@ export default function DashboardPage() {
           !!useGetUser.data.payload &&
           !!useGetUser.data.payload.address ? (
           <>
+            <Stack direction="row" spacing={2} alignItems="center" mt={4}>
+              <Typography variant="body1">Balance: 0</Typography>
+              <Button variant="contained" onClick={withdrawBalanceHandle}>
+                Withdraw Balance
+              </Button>
+            </Stack>
             <Typography
               variant="body1"
               mt={6}
