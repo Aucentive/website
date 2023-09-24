@@ -6,6 +6,8 @@ import {
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
+import axios from 'axios'
+import { ethers } from 'ethers'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useState } from 'react'
@@ -13,10 +15,12 @@ import { toast } from 'react-toastify'
 
 import { LoadingScreen, NavTopbar } from '@/components'
 import { useBiconomySmartAccount } from '@/components/context/SmartAccountContext'
+import { XMTPContentRouter } from '@/components/xmtp/ContentRouter'
 import { AUCENTIVE_CONTRACT_ADDRESS_TESTNET } from '@/config'
 import { useCreateUserMutation, useGetUserQuery } from '@/services/user'
-import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
 import { AucentiveHub__factory } from '@/types-typechain'
+import { FTUserData, FTUserTokenHolder } from '@/types'
+import Image from 'next/image'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -35,7 +39,7 @@ export default function DashboardPage() {
     getAccessToken,
   } = usePrivy()
   const { wallet: activeWallet, setActiveWallet } = usePrivyWagmi()
-  const { wallets } = useWallets()
+  // const { wallets } = useWallets()
 
   const { smartAccount } = useBiconomySmartAccount()
 
@@ -49,6 +53,8 @@ export default function DashboardPage() {
     text?: string
   }>({})
 
+  const [isWithdrawingBalance, setIsWithdrawingBalance] = useState(false)
+
   const useGetUser = useGetUserQuery(
     {
       accessToken: accessToken || '',
@@ -59,16 +65,28 @@ export default function DashboardPage() {
   )
 
   const [useCreateUser, createUserRes] = useCreateUserMutation()
-  const [useSendEmail, sendEmailRes] = useSendEmailMutation()
 
-  const useGetSentEmails = useGetSentEmailsQuery(
-    {
-      accessToken: accessToken || '',
-    },
-    {
-      skip: !accessToken,
-    },
-  )
+  const [ftUserAddress, setFtUserAddress] = useState<string>('')
+  const [ftUserData, setFtUserData] = useState<FTUserData>({
+    id: 0,
+    address: '',
+    twitterUsername: '',
+    twitterName: '',
+    twitterPfpUrl: '',
+    twitterUserId: '',
+    lastOnline: '',
+    lastMessageTime: '',
+    holderCount: 0,
+    holdingCount: 0,
+    watchlistCount: 0,
+    shareSupply: 0,
+    displayPrice: '',
+    lifetimeFeesCollectedInWei: '',
+  })
+
+  const [ftUserTokenHolders, setFtUserTokenHolders] = useState<
+    FTUserTokenHolder[]
+  >([])
 
   const claimHandleHandler = useCallback(async () => {
     if (
@@ -99,36 +117,11 @@ export default function DashboardPage() {
     }
   }, [accessToken, claimHandleValue, user, ready, authenticated])
 
-  const sendEmailHandler = useCallback(async () => {
-    if (!accessToken || !user || !ready || (ready && !authenticated)) return
-
-    const userEmail = user.email?.address || user.google?.email
-    if (!userEmail) return
-
-    if (!sendEmailData.to || !sendEmailData.subject || !sendEmailData.text)
-      return
-
-    try {
-      let recipientEmail = sendEmailData.to.replace('@mail.aucentive.com', '')
-      recipientEmail = `${recipientEmail}@mail.aucentive.com`
-
-      const res = await useSendEmail({
-        accessToken,
-        from: userEmail,
-        to: recipientEmail,
-        subject: sendEmailData.subject,
-        text: sendEmailData.text,
-        html: sendEmailData.text,
-      }).unwrap()
-      console.log(res)
-    } catch (err) {
-      console.error(err)
-    }
-  }, [accessToken, user, ready, authenticated, sendEmailData])
-
-  const withdrawBalanceHandle = useCallback(async () => {
+  const withdrawBalanceHandler = useCallback(async () => {
     console.log('smartAccount', smartAccount)
     if (!activeWallet || !smartAccount) return
+
+    setIsWithdrawingBalance(true)
 
     const provider = await activeWallet.getEthersProvider()
     const contract = AucentiveHub__factory.connect(
@@ -189,6 +182,8 @@ export default function DashboardPage() {
     } catch (err: any) {
       console.error(err)
       console.log(err)
+    } finally {
+      setIsWithdrawingBalance(false)
     }
   }, [activeWallet, smartAccount])
 
@@ -204,15 +199,27 @@ export default function DashboardPage() {
     getAccessToken().then((token) => setAccessToken(token))
   }, [ready, authenticated, router])
 
-  const numAccounts = user?.linkedAccounts?.length || 0
-  const canRemoveAccount = numAccounts > 1
+  useEffect(() => {
+    const getFtUserTokenHolders = async () => {
+      if (!ethers.utils.isAddress(ftUserAddress)) return
 
-  const email = user?.email
-  const wallet = user?.wallet
+      try {
+        setFtUserData
+        const resUser = await axios.get<FTUserData>(
+          `https://prod-api.kosetto.com/users/${ftUserAddress}`,
+        )
+        setFtUserData(resUser.data)
 
-  const googleSubject = user?.google?.subject || null
-
-  const userEmail = user?.email?.address || user?.google?.email || null
+        const resHolders = await axios.get<{
+          users: FTUserTokenHolder[]
+        }>(`https://prod-api.kosetto.com/users/${ftUserAddress}/token-holdings`)
+        setFtUserTokenHolders(resHolders.data.users)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    getFtUserTokenHolders()
+  }, [ftUserAddress])
 
   if (!ready || (ready && !authenticated)) {
     return <LoadingScreen />
@@ -302,10 +309,14 @@ export default function DashboardPage() {
           !!useGetUser.data.payload &&
           !!useGetUser.data.payload.address ? (
           <>
-            <Stack direction="row" spacing={2} alignItems="center" mt={4}>
-              <Typography variant="body1">Balance: 0</Typography>
-              <Button variant="contained" onClick={withdrawBalanceHandle}>
-                Withdraw Balance
+            <Stack direction="row" spacing={2} alignItems="center">
+              {/* <Typography variant="body1">Balance: 0</Typography> */}
+              <Button
+                variant="contained"
+                onClick={withdrawBalanceHandler}
+                disabled={isWithdrawingBalance}
+              >
+                Withdraw All USDC Balance
               </Button>
             </Stack>
             <Typography
@@ -317,6 +328,52 @@ export default function DashboardPage() {
             >
               Friend Tech
             </Typography>
+            <Box mt={2}>
+              <Typography variant="h6">Query Key Holders of FT User</Typography>
+              <TextField
+                type="text"
+                size="small"
+                variant="outlined"
+                placeholder="0xdeadbeef"
+                value={ftUserAddress}
+                onChange={(e) => setFtUserAddress(e.target.value)}
+                sx={{ minWidth: 400 }}
+              />
+            </Box>
+            {ftUserData.address && (
+              <Box mt={1}>
+                {/* <Stack direction="row" spacing={1}>
+                  <Image
+                    src={ftUserData.twitterPfpUrl}
+                    alt=""
+                    width={32}
+                    height={32}
+                  />
+                  <Typography variant="body1">
+                    {ftUserData.twitterName}
+                  </Typography>
+                </Stack> */}
+                <Stack>
+                  {ftUserTokenHolders.map((holder) => (
+                    <Stack direction="row" spacing={2} key={holder.address}>
+                      <Image
+                        src={holder.twitterPfpUrl}
+                        alt=""
+                        width={32}
+                        height={32}
+                      />
+                      <Typography variant="body1" fontWeight="bold">
+                        {holder.twitterName}
+                      </Typography>
+                      <Typography variant="body1">{holder.address}</Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+            <Box mt={4}>
+              <XMTPContentRouter />
+            </Box>
           </>
         ) : (
           <Box mt={2}>

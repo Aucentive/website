@@ -40,7 +40,7 @@ export default function EmailPage() {
     getAccessToken,
   } = usePrivy()
   const { wallet: activeWallet, setActiveWallet } = usePrivyWagmi()
-  const { wallets } = useWallets()
+  // const { wallets } = useWallets()
 
   const { smartAccount } = useBiconomySmartAccount()
 
@@ -79,35 +79,6 @@ export default function EmailPage() {
       skip: !accessToken,
     },
   )
-
-  const claimHandleHandler = useCallback(async () => {
-    if (
-      !accessToken ||
-      !claimHandleValue ||
-      !user ||
-      !ready ||
-      (ready && !authenticated)
-    )
-      return
-
-    const userEmail = user.email?.address || user.google?.email
-    const userWallet = user.wallet?.address
-    if (!userEmail || !userWallet) return
-
-    try {
-      console.log('userWallet', userWallet)
-      const res = await useCreateUser({
-        userId: userEmail,
-        address: userWallet,
-        name: user.google?.name || userEmail,
-        handle: `${claimHandleValue}@mail.aucentive.com`,
-        accessToken,
-      }).unwrap()
-      console.log(res)
-    } catch (err) {
-      console.error(err)
-    }
-  }, [accessToken, claimHandleValue, user, ready, authenticated])
 
   const sendEmailHandler = useCallback(async () => {
     if (!accessToken || !user || !ready || (ready && !authenticated)) return

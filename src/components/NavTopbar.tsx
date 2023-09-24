@@ -17,6 +17,12 @@ export function NavTopbar() {
         Dashboard
       </GotoLinkButton>
       <GotoLinkButton
+        href="/chat"
+        className={pathname == '/chat' ? 'active' : ''}
+      >
+        Chat
+      </GotoLinkButton>
+      <GotoLinkButton
         href="/email"
         className={pathname == '/email' ? 'active' : ''}
       >

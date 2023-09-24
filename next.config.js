@@ -22,6 +22,18 @@ const nextConfig = {
         // pathname: '/w20/*.png',
         pathname: '/**'
       },
+      {
+        protocol: 'https',
+        hostname: 'd3egfmvgqzu76k.cloudfront.net',
+        port: '',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'pbs.twimg.com',
+        port: '',
+        pathname: '/**'
+      }
     ],
   },
 
