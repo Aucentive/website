@@ -71,6 +71,7 @@ export default function EmailPage() {
   const [checkEmailPass, checkEmailPassRes] = useCheckEmailPassMutation()
 
   const [isPayingForService, setIsPayingForService] = useState(false)
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
 
   const useGetSentEmails = useGetSentEmailsQuery(
     {
@@ -90,6 +91,8 @@ export default function EmailPage() {
     if (!sendEmailData.to || !sendEmailData.subject || !sendEmailData.text)
       return
 
+    setIsSendingEmail(true)
+
     try {
       let recipientEmail = sendEmailData.to.replace('@mail.aucentive.com', '')
       recipientEmail = `${recipientEmail}@mail.aucentive.com`
@@ -105,6 +108,8 @@ export default function EmailPage() {
       console.log(res)
     } catch (err) {
       console.error(err)
+    } finally {
+      setIsSendingEmail(false)
     }
   }, [accessToken, user, ready, authenticated, sendEmailData])
 
@@ -357,7 +362,7 @@ export default function EmailPage() {
                                     accessToken,
                                     serviceId: email.id,
                                     payAmount: String(
-                                      payServiceAmount[email.id],
+                                      payServiceAmount[email.id] * 1_000_000,
                                     ),
                                   })
                                 }}
@@ -464,6 +469,7 @@ export default function EmailPage() {
                     size="large"
                     onClick={sendEmailHandler}
                     sx={{ mt: 2 }}
+                    disabled={isSendingEmail}
                   >
                     Send Email
                   </Button>
