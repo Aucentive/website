@@ -6,15 +6,20 @@ import {
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useState } from 'react'
-import Head from 'next/head'
+import { toast } from 'react-toastify'
 
 import { LoadingScreen, NavTopbar } from '@/components'
 import { useBiconomySmartAccount } from '@/components/context/SmartAccountContext'
 import { AUCENTIVE_CONTRACT_ADDRESS_TESTNET } from '@/config'
 import { useCreateUserMutation, useGetUserQuery } from '@/services/user'
-import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
+import {
+  useCheckEmailPassMutation,
+  useGetSentEmailsQuery,
+  useSendEmailMutation,
+} from '@/services/email'
 import { EmailStatus } from '@/types'
 import { AucentiveHub__factory } from '@/types-typechain'
 
@@ -63,7 +68,8 @@ export default function EmailPage() {
   )
 
   const [useCreateUser, createUserRes] = useCreateUserMutation()
-  const [useSendEmail, sendEmailRes] = useSendEmailMutation()
+  const [sendEmail, sendEmailRes] = useSendEmailMutation()
+  const [checkEmailPass, checkEmailPassRes] = useCheckEmailPassMutation()
 
   const useGetSentEmails = useGetSentEmailsQuery(
     {
@@ -116,7 +122,7 @@ export default function EmailPage() {
       let recipientEmail = sendEmailData.to.replace('@mail.aucentive.com', '')
       recipientEmail = `${recipientEmail}@mail.aucentive.com`
 
-      const res = await useSendEmail({
+      const res = await sendEmail({
         accessToken,
         from: userEmail,
         to: recipientEmail,
@@ -182,6 +188,20 @@ export default function EmailPage() {
 
         const { receipt } = await userOpResponse.wait(1)
         console.log('txHash', receipt.transactionHash)
+
+        toast.success(
+          `Success! Here is your transaction: ${receipt.transactionHash} `,
+          {
+            position: 'top-right',
+            autoClose: 18000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: 'dark',
+          },
+        )
       } catch (err: any) {
         console.error(err)
         console.log(err)
@@ -288,6 +308,7 @@ export default function EmailPage() {
         {useGetUser.isLoading || useGetUser.isFetching ? (
           <></>
         ) : !useGetUser.isFetching &&
+          !!accessToken &&
           useGetUser.data &&
           !!useGetUser.data.payload &&
           !!useGetUser.data.payload.address ? (
@@ -347,12 +368,25 @@ export default function EmailPage() {
                           />
                           <Button
                             variant="contained"
-                            size="large"
+                            size="medium"
                             onClick={() =>
                               payForServiceHandle(`0x${email.hash}`, 0)
                             }
                           >
                             Pay For Email
+                          </Button>
+                          <Button
+                            variant="contained"
+                            size="medium"
+                            onClick={() =>
+                              checkEmailPass({
+                                accessToken,
+                                serviceId: email.id,
+                                payAmount: '0',
+                              })
+                            }
+                          >
+                            Check Email
                           </Button>
                         </Stack>
                       </Box>

@@ -6,9 +6,10 @@ import {
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useState } from 'react'
-import Head from 'next/head'
+import { toast } from 'react-toastify'
 
 import { LoadingScreen, NavTopbar } from '@/components'
 import { useBiconomySmartAccount } from '@/components/context/SmartAccountContext'
@@ -172,6 +173,20 @@ export default function DashboardPage() {
 
       const { receipt } = await userOpResponse.wait(1)
       console.log('txHash', receipt.transactionHash)
+
+      toast.success(
+        `Success! Here is your transaction: ${receipt.transactionHash} `,
+        {
+          position: 'top-right',
+          autoClose: 18000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: 'dark',
+        },
+      )
     } catch (err: any) {
       console.error(err)
       console.log(err)
@@ -303,7 +318,6 @@ export default function DashboardPage() {
             >
               Friend Tech
             </Typography>
-            
           </>
         ) : (
           <Box mt={2}>

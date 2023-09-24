@@ -7,7 +7,9 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Provider as StoreProvider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
+import { ToastContainer } from 'react-toastify'
 
+import 'react-toastify/dist/ReactToastify.css'
 import '@/styles/global.css'
 
 import { wagmiChainsConfig } from '@/config/wagmi'
@@ -48,6 +50,18 @@ export default function App({ Component, pageProps }: AppProps) {
               <BiconomySmartAccountProvider>
                 <ThemeProvider theme={customTheme}>
                   <Component {...pageProps} />
+                  <ToastContainer
+                    position="top-right"
+                    autoClose={5000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    // pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="dark"
+                  />
                 </ThemeProvider>
               </BiconomySmartAccountProvider>
             </PrivyWagmiConnector>

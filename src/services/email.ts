@@ -50,7 +50,24 @@ export const emailApi = createApi({
         },
       }),
     }),
+
+    checkEmailPass: builder.mutation<
+      ApiResponse<string>,
+      { accessToken: string } & {
+        serviceId: string
+        payAmount: string
+      }
+    >({
+      query: ({ accessToken, ...body }) => ({
+        url: 'email/webhook-pass',
+        method: 'POST',
+        body,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }),
+    }),
   }),
 })
 
-export const { useGetSentEmailsQuery, useSendEmailMutation } = emailApi
+export const { useGetSentEmailsQuery, useSendEmailMutation, useCheckEmailPassMutation } = emailApi
