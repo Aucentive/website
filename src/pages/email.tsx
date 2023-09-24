@@ -67,9 +67,10 @@ export default function EmailPage() {
     },
   )
 
-  const [useCreateUser, createUserRes] = useCreateUserMutation()
   const [sendEmail, sendEmailRes] = useSendEmailMutation()
   const [checkEmailPass, checkEmailPassRes] = useCheckEmailPassMutation()
+
+  const [isPayingForService, setIsPayingForService] = useState(false)
 
   const useGetSentEmails = useGetSentEmailsQuery(
     {
@@ -107,10 +108,12 @@ export default function EmailPage() {
     }
   }, [accessToken, user, ready, authenticated, sendEmailData])
 
-  const payForServiceHandle = useCallback(
+  const payForServiceHandler = useCallback(
     async (serviceId: string, payAmount: number) => {
       console.log('smartAccount', smartAccount)
       if (!activeWallet || !smartAccount) return
+
+      setIsPayingForService(true)
 
       const provider = await activeWallet.getEthersProvider()
       const contract = AucentiveHub__factory.connect(
@@ -176,6 +179,8 @@ export default function EmailPage() {
       } catch (err: any) {
         console.error(err)
         console.log(err)
+      } finally {
+        setIsPayingForService(false)
       }
     },
     [activeWallet, smartAccount],
@@ -202,12 +207,12 @@ export default function EmailPage() {
   return (
     <>
       <Head>
-        <title>Dashboard · Aucentive</title>
+        <title>Email · Aucentive</title>
       </Head>
 
       <main className="flex flex-col min-h-screen px-4 sm:px-20 py-6 sm:py-10 bg-privy-light-blue">
         <div className="flex flex-row justify-between">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <h1 className="text-2xl font-semibold">Email</h1>
           <button
             onClick={logout}
             className="text-sm bg-violet-200 hover:text-violet-900 py-2 px-4 rounded-md text-violet-700"
@@ -328,39 +333,51 @@ export default function EmailPage() {
                           {email.status !== 4 && email.status !== 5 && (
                             <>
                               <TextField
-                            type="number"
-                            value={payServiceAmount[email.id] || 0}
-                            onChange={(e) =>
-                              setPayServiceAmount((prev) => ({
-                                ...prev,
-                                [email.id]: Number(e.target.value),
-                              }))
-                            }
-                            InputProps={{ inputProps: { min: 0 } }}
-                            sx={{ display: 'block' }}
-                          />
-                          <Button
-                            variant="contained"
-                            size="medium"
-                            onClick={() =>
-                              payForServiceHandle(`0x${email.hash}`, 0)
-                            }
-                          >
-                            Pay For Email
-                          </Button>
-                          <Button
-                            variant="contained"
-                            size="medium"
-                            onClick={() =>
-                              checkEmailPass({
-                                accessToken,
-                                serviceId: email.id,
-                                payAmount: '0',
-                              })
-                            }
-                          >
-                            Check Email
-                          </Button>
+                                type="number"
+                                value={payServiceAmount[email.id] || 0}
+                                onChange={(e) =>
+                                  setPayServiceAmount((prev) => ({
+                                    ...prev,
+                                    [email.id]: Number(e.target.value),
+                                  }))
+                                }
+                                InputProps={{ inputProps: { min: 0 } }}
+                                sx={{ display: 'block' }}
+                              />
+                              <Button
+                                variant="contained"
+                                size="medium"
+                                onClick={async () => {
+                                  await payForServiceHandler(
+                                    `0x${email.hash}`,
+                                    payServiceAmount[email.id],
+                                  )
+
+                                  await checkEmailPass({
+                                    accessToken,
+                                    serviceId: email.id,
+                                    payAmount: String(
+                                      payServiceAmount[email.id],
+                                    ),
+                                  })
+                                }}
+                                disabled={isPayingForService}
+                              >
+                                Pay For Email
+                              </Button>
+                              {/* <Button
+                                variant="contained"
+                                size="medium"
+                                onClick={() =>
+                                  checkEmailPass({
+                                    accessToken,
+                                    serviceId: email.id,
+                                    payAmount: '0',
+                                  })
+                                }
+                              >
+                                Check Email
+                              </Button> */}
                             </>
                           )}
                         </Stack>

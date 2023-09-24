@@ -45,6 +45,7 @@ export default function DashboardPage() {
 
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [claimHandleValue, setClaimHandleValue] = useState<string>('')
+  const [isClaimingHandle, setIsClaimingHandle] = useState(false)
 
   const [sendEmailData, setSendEmailData] = useState<{
     from?: string
@@ -102,8 +103,10 @@ export default function DashboardPage() {
     const userWallet = user.wallet?.address
     if (!userEmail || !userWallet) return
 
+    setIsClaimingHandle(true)
+
     try {
-      console.log('userWallet', userWallet)
+      // console.log('userWallet', userWallet)
       const res = await useCreateUser({
         userId: userEmail,
         address: userWallet,
@@ -111,9 +114,16 @@ export default function DashboardPage() {
         handle: `${claimHandleValue}@mail.aucentive.com`,
         accessToken,
       }).unwrap()
-      console.log(res)
+      // console.log(res)
+
+      toast.success(`Success! Your handle is ${claimHandleHandler}`)
+      setTimeout(() => {
+        router.reload()
+      }, 2000)
     } catch (err) {
       console.error(err)
+    } finally {
+      setIsClaimingHandle(false)
     }
   }, [accessToken, claimHandleValue, user, ready, authenticated])
 
@@ -371,9 +381,6 @@ export default function DashboardPage() {
                 </Stack>
               </Box>
             )}
-            <Box mt={4}>
-              <XMTPContentRouter />
-            </Box>
           </>
         ) : (
           <Box mt={2}>
@@ -392,6 +399,7 @@ export default function DashboardPage() {
                 variant="contained"
                 size="large"
                 onClick={claimHandleHandler}
+                disabled={isClaimingHandle}
               >
                 Claim
               </Button>
