@@ -17,6 +17,12 @@ export function NavTopbar() {
         Dashboard
       </GotoLinkButton>
       <GotoLinkButton
+        href="/email"
+        className={pathname == '/email' ? 'active' : ''}
+      >
+        Email
+      </GotoLinkButton>
+      <GotoLinkButton
         href="/privy"
         className={pathname == '/privy' ? 'active' : ''}
       >

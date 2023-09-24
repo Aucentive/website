@@ -18,7 +18,7 @@ import { useGetSentEmailsQuery, useSendEmailMutation } from '@/services/email'
 import { EmailStatus } from '@/types'
 import { AucentiveHub__factory } from '@/types-typechain'
 
-export default function DashboardPage() {
+export default function EmailPage() {
   const router = useRouter()
   const {
     ready,
@@ -48,6 +48,10 @@ export default function DashboardPage() {
     subject?: string
     text?: string
   }>({})
+
+  const [payServiceAmount, setPayServiceAmount] = useState<
+    Record<string, number>
+  >({})
 
   const useGetUser = useGetUserQuery(
     {
@@ -126,57 +130,65 @@ export default function DashboardPage() {
     }
   }, [accessToken, user, ready, authenticated, sendEmailData])
 
-  const withdrawBalanceHandle = useCallback(async () => {
-    console.log('smartAccount', smartAccount)
-    if (!activeWallet || !smartAccount) return
+  const payForServiceHandle = useCallback(
+    async (serviceId: string, payAmount: number) => {
+      console.log('smartAccount', smartAccount)
+      if (!activeWallet || !smartAccount) return
 
-    const provider = await activeWallet.getEthersProvider()
-    const contract = AucentiveHub__factory.connect(
-      AUCENTIVE_CONTRACT_ADDRESS_TESTNET,
-      provider,
-    )
+      const provider = await activeWallet.getEthersProvider()
+      const contract = AucentiveHub__factory.connect(
+        AUCENTIVE_CONTRACT_ADDRESS_TESTNET,
+        provider,
+      )
 
-    try {
-      const withdrawTx = await contract.populateTransaction.withdrawBalance()
-      console.log(withdrawTx.data)
-
-      const tx1 = {
-        to: AUCENTIVE_CONTRACT_ADDRESS_TESTNET,
-        data: withdrawTx.data,
-      }
-
-      let userOp = await smartAccount.buildUserOp([tx1])
-      console.log('userOp', userOp)
-
-      const biconomyPaymaster =
-        smartAccount.paymaster as IHybridPaymaster<SponsorUserOperationDto>
-
-      let paymasterServiceData: SponsorUserOperationDto = {
-        mode: PaymasterMode.SPONSORED,
-        smartAccountInfo: {
-          name: 'BICONOMY',
-          version: '2.0.0',
-        },
-      }
-
-      const paymasterAndDataResponse =
-        await biconomyPaymaster.getPaymasterAndData(
-          userOp,
-          paymasterServiceData,
+      try {
+        console.log('serviceId', serviceId)
+        console.log('payAmount', payAmount)
+        const withdrawTx = await contract.populateTransaction.payForService(
+          serviceId,
+          payAmount,
         )
-      console.log('paymasterAndDataResponse', paymasterAndDataResponse)
+        console.log(withdrawTx.data)
 
-      userOp.paymasterAndData = paymasterAndDataResponse.paymasterAndData
-      const userOpResponse = await smartAccount.sendUserOp(userOp)
-      console.log('userOpHash', userOpResponse)
+        const tx1 = {
+          to: AUCENTIVE_CONTRACT_ADDRESS_TESTNET,
+          data: withdrawTx.data,
+        }
 
-      const { receipt } = await userOpResponse.wait(1)
-      console.log('txHash', receipt.transactionHash)
-    } catch (err: any) {
-      console.error(err)
-      console.log(err)
-    }
-  }, [activeWallet, smartAccount])
+        let userOp = await smartAccount.buildUserOp([tx1])
+        console.log('userOp', userOp)
+
+        const biconomyPaymaster =
+          smartAccount.paymaster as IHybridPaymaster<SponsorUserOperationDto>
+
+        let paymasterServiceData: SponsorUserOperationDto = {
+          mode: PaymasterMode.SPONSORED,
+          smartAccountInfo: {
+            name: 'BICONOMY',
+            version: '2.0.0',
+          },
+        }
+
+        const paymasterAndDataResponse =
+          await biconomyPaymaster.getPaymasterAndData(
+            userOp,
+            paymasterServiceData,
+          )
+        console.log('paymasterAndDataResponse', paymasterAndDataResponse)
+
+        userOp.paymasterAndData = paymasterAndDataResponse.paymasterAndData
+        const userOpResponse = await smartAccount.sendUserOp(userOp)
+        console.log('userOpHash', userOpResponse)
+
+        const { receipt } = await userOpResponse.wait(1)
+        console.log('txHash', receipt.transactionHash)
+      } catch (err: any) {
+        console.error(err)
+        console.log(err)
+      }
+    },
+    [activeWallet, smartAccount],
+  )
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -189,14 +201,6 @@ export default function DashboardPage() {
 
     getAccessToken().then((token) => setAccessToken(token))
   }, [ready, authenticated, router])
-
-  const numAccounts = user?.linkedAccounts?.length || 0
-  const canRemoveAccount = numAccounts > 1
-
-  const email = user?.email
-  const wallet = user?.wallet
-
-  const googleSubject = user?.google?.subject || null
 
   const userEmail = user?.email?.address || user?.google?.email || null
 
@@ -288,12 +292,12 @@ export default function DashboardPage() {
           !!useGetUser.data.payload &&
           !!useGetUser.data.payload.address ? (
           <>
-            <Stack direction="row" spacing={2} alignItems="center" mt={4}>
+            {/* <Stack direction="row" spacing={2} alignItems="center" mt={4}>
               <Typography variant="body1">Balance: 0</Typography>
               <Button variant="contained" onClick={withdrawBalanceHandle}>
                 Withdraw Balance
               </Button>
-            </Stack>
+            </Stack> */}
             <Typography
               variant="body1"
               mt={6}
@@ -301,32 +305,148 @@ export default function DashboardPage() {
               textTransform="uppercase"
               className="text-gray-600"
             >
-              Friend Tech
+              Emails
             </Typography>
-            
+            <Box>
+              <Typography variant="h5">Sent Emails</Typography>
+              <Box mt={2}>
+                <Typography variant="body1">
+                  {useGetSentEmails.data?.payload?.map((email) => {
+                    return (
+                      <Box
+                        key={email.id}
+                        bgcolor="#eee"
+                        p={3}
+                        borderRadius={8}
+                        display="inline-block"
+                      >
+                        <Stack spacing={1}>
+                          <Typography variant="body1">
+                            ID: {email.id}
+                          </Typography>
+                          <Typography variant="body1">
+                            Status: {EmailStatus[email.status]}
+                          </Typography>
+                          <Typography variant="body1">
+                            Recipient: {email.recipient}
+                          </Typography>
+                          <Typography variant="body1">
+                            Subject: {email.subject}
+                          </Typography>
+                          <TextField
+                            type="number"
+                            value={payServiceAmount[email.id] || 0}
+                            onChange={(e) =>
+                              setPayServiceAmount((prev) => ({
+                                ...prev,
+                                [email.id]: Number(e.target.value),
+                              }))
+                            }
+                            InputProps={{ inputProps: { min: 0 } }}
+                            sx={{ display: 'block' }}
+                          />
+                          <Button
+                            variant="contained"
+                            size="large"
+                            onClick={() =>
+                              payForServiceHandle(`0x${email.hash}`, 0)
+                            }
+                          >
+                            Pay For Email
+                          </Button>
+                        </Stack>
+                      </Box>
+                    )
+                  })}
+                </Typography>
+              </Box>
+            </Box>
+            {userEmail && (
+              <Box mt={4}>
+                <Typography variant="h5">Send Email</Typography>
+                <Box
+                  mt={2}
+                  maxWidth={550}
+                  p={3}
+                  bgcolor="#eee"
+                  borderRadius={2}
+                >
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Typography variant="body1" fontWeight="bold">
+                      From:{' '}
+                    </Typography>
+                    <Typography>{userEmail}</Typography>
+                  </Stack>
+                  <Stack direction="column" spacing={1} mt={2}>
+                    <Typography variant="body1" fontWeight="bold">
+                      To:{' '}
+                    </Typography>
+                    <TextField
+                      type="text"
+                      size="small"
+                      variant="outlined"
+                      placeholder="jdub@jdub.com"
+                      value={sendEmailData.to}
+                      onChange={(e) =>
+                        setSendEmailData((prev) => ({
+                          ...prev,
+                          to: e.target.value,
+                        }))
+                      }
+                    />
+                  </Stack>
+                  <Stack direction="column" spacing={1} mt={2}>
+                    <Typography variant="body1" fontWeight="bold">
+                      Subject
+                    </Typography>
+                    <TextField
+                      type="text"
+                      size="small"
+                      variant="outlined"
+                      placeholder="Type subject here"
+                      value={sendEmailData.subject}
+                      onChange={(e) =>
+                        setSendEmailData((prev) => ({
+                          ...prev,
+                          subject: e.target.value,
+                        }))
+                      }
+                    />
+                  </Stack>
+                  <Stack direction="column" spacing={1} mt={3}>
+                    <Typography variant="body1" fontWeight="bold">
+                      Text
+                    </Typography>
+                    <TextField
+                      type="text"
+                      size="medium"
+                      variant="outlined"
+                      placeholder="text"
+                      multiline
+                      minRows={5}
+                      value={sendEmailData.text}
+                      onChange={(e) =>
+                        setSendEmailData((prev) => ({
+                          ...prev,
+                          text: e.target.value,
+                        }))
+                      }
+                    />
+                  </Stack>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={sendEmailHandler}
+                    sx={{ mt: 2 }}
+                  >
+                    Send Email
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </>
         ) : (
-          <Box mt={2}>
-            <Typography variant="h5">Claim Handle</Typography>
-            <Stack direction="row" spacing={2} alignItems="center" mt={4}>
-              <TextField
-                type="text"
-                size="medium"
-                variant="outlined"
-                placeholder="Enter handle to claim"
-                value={claimHandleValue}
-                onChange={(e) => setClaimHandleValue(e.target.value)}
-              />
-              <Typography variant="body1">@mail.aucentive.com</Typography>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={claimHandleHandler}
-              >
-                Claim
-              </Button>
-            </Stack>
-          </Box>
+          <></>
         )}
       </main>
     </>

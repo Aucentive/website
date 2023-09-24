@@ -12,6 +12,7 @@ export const emailApi = createApi({
       ApiResponse<
         {
           id: string
+          hash: string
           sender: string
           recipient: string
           subject: string
